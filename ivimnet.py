@@ -15,7 +15,7 @@ class IVIMNet(nn.Module):
                                      nn.Linear(len(b_values), 4))
 
     def forward(self, x):
-        params = torch.abs(self.encoder(x))  # Dp, Dt, Fp, c
+        params = torch.abs(self.encoder(x))
 
         dp = params[:, 0].unsqueeze(1)
         dt = params[:, 1].unsqueeze(1)
@@ -23,9 +23,9 @@ class IVIMNet(nn.Module):
         b = params[:, 3].unsqueeze(1)
 
         c = a + b
-        fp = a / c
+        fp = a / c  # (1 - fp) = b / c
 
         x_fit = c * (fp * torch.exp(-self.b_values * dp)
-                     + (1 - fp)*torch.exp(-self.b_values * dt))
+                     + (b / c)*torch.exp(-self.b_values * dt))
 
         return x_fit, dp, dt, fp, c
