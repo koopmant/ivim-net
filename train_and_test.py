@@ -11,7 +11,7 @@ from ivimnet import IVIMNet
 
 
 working_dir = Path("path/to/analyses/IVIM_net")
-modelname = "IVIM_net_abs"
+modelname = "IVIM_net_sigm"
 
 # data
 filepath_data = Path(
@@ -28,7 +28,7 @@ x_norm = x[:, 1:]/x[:, 0:1]
 
 # %%
 
-for ii in range(99):
+for ii in range(1):
 
     dt_string = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
@@ -66,8 +66,8 @@ for ii in range(99):
             optimizer.zero_grad()
     
             # forward + backward + optimize
-            x_pred = net(x_batch)[0]
-            loss = criterion(x_pred, x_batch)
+            x_pred = net(x_batch[0])[0]
+            loss = criterion(x_pred, x_batch[0])
             loss.backward()
             optimizer.step()
             running_loss += loss.item()
