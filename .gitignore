@@ -1,3 +1,8 @@
+# Configuration file. Will be created from *.yaml.example if missing
+*.yaml
+
+.idea/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

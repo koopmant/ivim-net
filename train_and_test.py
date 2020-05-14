@@ -8,14 +8,15 @@ import torch.utils.data as utils
 from tqdm import tqdm
 import datetime
 from ivimnet import IVIMNet
+from utils import read_yaml
 
 
-working_dir = Path("path/to/analyses/IVIM_net")
 modelname = "IVIM_net_sigm"
+settings = read_yaml(Path("config.yaml"))
 
 # data
 filepath_data = Path(
-        working_dir, "concatenated_signals_for_deeplearning.mat")
+        settings['dir'], "concatenated_signals_for_deeplearning.mat")
 mat = scipy.io.loadmat(filepath_data)
 
 # b values
@@ -83,7 +84,7 @@ for ii in range(1):
             num_bad_epochs = num_bad_epochs + 1
             if num_bad_epochs == patience:
                 torch.save(final_model,
-                           Path(working_dir,
+                           Path(settings['dir'],
                                 "model_" + modelname + f'{ii:02}' + "_" + dt_string + ".pt"))
                 print("Done, best loss: {}".format(best))
                 break
@@ -105,6 +106,6 @@ for ii in range(1):
     fr = {"Dp": dp_pred.numpy(), "Dt": dt_pred.numpy(),
           "fp": fp_pred.numpy(), "s0": s0_pred}
     
-    scipy.io.savemat(Path(working_dir,
+    scipy.io.savemat(Path(settings['dir'],
                           "fr_" + modelname + f'{ii:02}' + "_" + dt_string + ".mat"),
                      fr, do_compression=True)
