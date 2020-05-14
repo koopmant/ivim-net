@@ -7,12 +7,17 @@ import torch.optim as optim
 import torch.utils.data as utils
 from tqdm import tqdm
 import datetime
-from ivimnet import IVIMNet
+import ivimnet
 from utils import read_yaml
 
 
-modelname = "IVIM_net_sigm"
 settings = read_yaml(Path("config.yaml"))
+
+models = {
+    'ivim_net': ivimnet.IVIMNet,
+    'ivim_net_abs': ivimnet.IVIMNetAbs,
+    'ivim_net_sigm': ivimnet.IVIMNetSigm,
+}
 
 # data
 filepath_data = Path(
@@ -34,7 +39,7 @@ for ii in range(1):
     dt_string = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
     # Network
-    net = IVIMNet(b_values_no0)
+    net = models[settings['model']](b_values_no0)
     
     # Loss function and optimizer
     criterion = nn.MSELoss()
