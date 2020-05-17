@@ -3,9 +3,10 @@ datafile:   data.mat
 net:              ivim_net_sigm
 optimizer:        adam
 learning_rate:    0.005
-patience:         10
+patience:         100  # fixed stop after 16 epochs
 batch_size_train: 128
-batch_size_val:   4096
+batch_size_val:   8192
 split:            TRUE
 split_ratio:      0.8
-max_it:           1000  # max iterations per epoch
+max_it_train:     1024  # max iterations per epoch
+max_it_val:       512
