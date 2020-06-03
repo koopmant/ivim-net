@@ -44,7 +44,7 @@ x_norm = x[:, 1:]/x[:, 0:1]  # normalize on x at b=0
 
 # %%
 
-for ii in range(3, 40):
+for ii in range(100):
 
     dt_string = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
