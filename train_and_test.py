@@ -44,7 +44,7 @@ x_norm = x[:, 1:]/x[:, 0:1]  # normalize on x at b=0
 
 # %%
 
-for ii in range(0, 100):
+for ii in range(3, 40):
 
     dt_string = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
@@ -77,7 +77,7 @@ for ii in range(0, 100):
     # get_ipython().run_line_magic('matplotlib', 'inline')
 
     if not arg['split']:
-        for epoch in range(16):
+        for epoch in range(1000):
             print("-----------------------------------------------------------------")
             print(f"Epoch: {epoch}; Bad epochs: {num_bad_epochs}")
             net.train()
@@ -155,7 +155,7 @@ for ii in range(0, 100):
         # Initialising parameters
         loss_val = []
         # Train
-        for epoch in range(16):
+        for epoch in range(1000):
             print("-----------------------------------------------------------------")
             print(f"Epoch: {epoch}; Bad epochs: {num_bad_epochs}")
             # initialising and resetting parameters
@@ -208,22 +208,20 @@ for ii in range(0, 100):
                 plt.ylabel('loss')
                 # plt.show()
                 plt.savefig(Path(arg['dir'], save_file_str + "_plot.png"))
-            final_model = net.state_dict()
-            torch.save(final_model, Path(arg['dir'], save_file_str + f"epoch_{epoch}_model.pt"))
-            # # early stopping criteria
-            # if running_loss_val < best:
-            #     print("############### Saving good model ###############################")
-            #     final_model = net.state_dict()
-            #     best = running_loss_val
-            #     num_bad_epochs = 0
-            # else:
-            #     # if loss not better, than add "bad epoch" and don't save network
-            #     num_bad_epochs = num_bad_epochs + 1
-            #     if num_bad_epochs == arg['patience']:
-            #         torch.save(final_model,
-            #                    Path(arg['dir'], save_file_str + "_model.pt"))
-            #         print(f"Done, best loss: {best}")
-            #         break
+            # early stopping criteria
+            if running_loss_val < best:
+                print("############### Saving good model ###############################")
+                final_model = net.state_dict()
+                best = running_loss_val
+                num_bad_epochs = 0
+            else:
+                # if loss not better, than add "bad epoch" and don't save network
+                num_bad_epochs = num_bad_epochs + 1
+                if num_bad_epochs == arg['patience']:
+                    torch.save(final_model,
+                               Path(arg['dir'], save_file_str + "_model.pt"))
+                    print(f"Done, best loss: {best}")
+                    break
 
         # # plot loss history
         # plt.clf()
@@ -240,19 +238,19 @@ for ii in range(0, 100):
     # apply net to data
 
     # Restore best model
-    # net.load_state_dict(final_model)
+    net.load_state_dict(final_model)
 
     # evaluate on data
-    # net.eval()
-    # with torch.no_grad():
-    #     dp_pred, dt_pred, fp_pred, c_pred = net(
-    #             torch.from_numpy(x_norm.astype(np.float32)))[1:]
-    #
-    # s0_pred = c_pred.numpy() * x[:, 0:1]
-    #
-    # # save results
-    # fr = {"Dp": dp_pred.numpy(), "Dt": dt_pred.numpy(),
-    #       "fp": fp_pred.numpy(), "s0": s0_pred}
-    #
-    # scipy.io.savemat(Path(arg['dir'], save_file_str + "_fr.mat"),
-    #                  fr, do_compression=True)
+    net.eval()
+    with torch.no_grad():
+        dp_pred, dt_pred, fp_pred, c_pred = net(
+                torch.from_numpy(x_norm.astype(np.float32)))[1:]
+    
+    s0_pred = c_pred.numpy() * x[:, 0:1]
+    
+    # save results
+    fr = {"Dp": dp_pred.numpy(), "Dt": dt_pred.numpy(),
+          "fp": fp_pred.numpy(), "s0": s0_pred}
+    
+    scipy.io.savemat(Path(arg['dir'], save_file_str + "_fr.mat"),
+                     fr, do_compression=True)
