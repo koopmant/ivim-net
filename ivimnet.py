@@ -12,17 +12,17 @@ class IVIMNet(nn.Module):
             self.fc_layers.extend([nn.Linear(len(b_values), len(b_values)), nn.ELU()])
         self.encoder = nn.Sequential(*self.fc_layers, nn.Linear(len(b_values), 4))
 
-    def forward(self, x):
-        params = self.encoder(x)
+    def forward(self, s):
+        params = self.encoder(s)
 
         dp = params[:, 0].unsqueeze(1)
         dt = params[:, 1].unsqueeze(1)
         fp = params[:, 2].unsqueeze(1)
         c = params[:, 3].unsqueeze(1)
 
-        x_fit = self.ivim(dp, dt, fp, c)
+        s_fit = self.ivim(dp, dt, fp, c)
 
-        return x_fit, dp, dt, fp, c
+        return s_fit, dp, dt, fp, c
 
     def ivim(self, dp, dt, fp, c):
         fit = c * (fp * torch.exp(-self.b_values * dp)
@@ -34,8 +34,8 @@ class IVIMNetAbs(IVIMNet):
     def __init__(self, b_values):
         super().__init__(b_values)
 
-    def forward(self, x):
-        params = torch.abs(self.encoder(x))
+    def forward(self, s):
+        params = torch.abs(self.encoder(s))
 
         dp = params[:, 0].unsqueeze(1)
         dt = params[:, 1].unsqueeze(1)
@@ -45,17 +45,17 @@ class IVIMNetAbs(IVIMNet):
         c = a + b
         fp = a / c
 
-        x_fit = self.ivim(dp, dt, fp, c)
+        s_fit = self.ivim(dp, dt, fp, c)
 
-        return x_fit, dp, dt, fp, c
+        return s_fit, dp, dt, fp, c
 
 
 class IVIMNetSigm(IVIMNet):
     def __init__(self, b_values):
         super().__init__(b_values)
 
-    def forward(self, x):
-        params = torch.sigmoid(self.encoder(x))
+    def forward(self, s):
+        params = torch.sigmoid(self.encoder(s))
 
         dt_min = 0
         dt_max = 0.005
@@ -71,6 +71,6 @@ class IVIMNetSigm(IVIMNet):
         fp = f_min + params[:, 2].unsqueeze(1) * (f_max - f_min)
         c = c_min + params[:, 3].unsqueeze(1) * (c_max - c_min)
 
-        x_fit = self.ivim(dp, dt, fp, c)
+        s_fit = self.ivim(dp, dt, fp, c)
 
-        return x_fit, dp, dt, fp, c
+        return s_fit, dp, dt, fp, c
