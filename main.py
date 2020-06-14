@@ -28,7 +28,7 @@ class Trainer(Config):
         return device
 
     def run(self):
-        # Copy configuration file to output directory
+        # Copy configuration files to output directory
         shutil.copy("hyperparameters.py", str(self.save_dir))
         shutil.copy("ivimnet.py", str(self.save_dir))
 
@@ -68,32 +68,61 @@ class Trainer(Config):
         self.b_values = torch.from_numpy(b).to(self.device)
 
     def train(self):
-        # Data loader
-        data_loader = DataLoader(self.data_set,
-                                 batch_size=self.batch_size,
-                                 shuffle=True,
-                                 num_workers=0,
-                                 drop_last=True)
-
         # Initialize
         best_loss = 1e16
         num_bad_epochs = 0
-        loss_train = []
+        losses_train = []
 
-        for epoch in range(2):
+        if self.split:
+            losses_val = []
+            split = int(np.floor(len(self.data_set) * self.split_ratio))
+            train_set, val_set = torch.utils.data.random_split(self.data_set, [split, len(self.data_set) - split])
+            data_loader = DataLoader(train_set,
+                                     batch_size=self.batch_size,
+                                     shuffle=True,
+                                     num_workers=0,
+                                     drop_last=True)
+
+            val_loader = DataLoader(val_set,
+                                    batch_size=self.batch_size_val,
+                                    shuffle=False,
+                                    num_workers=0,
+                                    drop_last=True)
+
+        else:
+            # Data loader
+            data_loader = DataLoader(self.data_set,
+                                     batch_size=self.batch_size,
+                                     shuffle=True,
+                                     num_workers=0,
+                                     drop_last=True)
+
+        for epoch in range(1000):
             print("-----------------------------------------------------------------")
             print(f"Epoch: {epoch}; Bad epochs: {num_bad_epochs}")
 
             # Run one epoch
-            loss = self.iterate(data_loader, self.max_it, train=True)
-
-            # show loss
-            print(f"Loss: {loss}")
-
+            loss_train = self.iterate(data_loader, self.max_it, train=True)
             # save loss history for plot
-            loss_train.append(loss)
-            # plot loss history
-            self.plot(loss_train)
+            losses_train.append(loss_train)
+
+            if self.split:
+                loss_val = self.iterate(val_loader, self.max_it_val, train=False)
+                # save loss history for plot
+                losses_val.append(loss_val)
+                # show loss
+                print(f"Loss: {loss_train}, validation_loss: {loss_val}")
+                # plot loss history
+                self.plot(losses_train, losses_val)
+                # loss to compare
+                loss = loss_val
+            else:
+                # show loss
+                print(f"Loss: {loss_train}")
+                # plot loss history
+                self.plot(losses_train)
+                # loss to compare
+                loss = loss_train
 
             # early stopping
             if loss < best_loss:
@@ -142,9 +171,11 @@ class Trainer(Config):
         avg_loss = total_loss / total_it
         return avg_loss
 
-    def plot(self, loss_train):
+    def plot(self, loss_train, loss_val=None):
         plt.clf()
         plt.plot(loss_train)
+        if loss_val is not None:
+            plt.plot(loss_val)
         plt.yscale("log")
         plt.xlabel('epoch')
         plt.ylabel('loss')
